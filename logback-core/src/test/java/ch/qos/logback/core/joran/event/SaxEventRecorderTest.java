@@ -68,6 +68,16 @@ public class SaxEventRecorderTest {
         assertEquals(11, seList.size());
     }
 
+    // timeout in case the attack is not prevented and the parser dials out to the
+    // SYSTEM host in the DOCTYPE
+    @Test(timeout = 500)
+    public void testEventSSRF() throws Exception {
+        List<SaxEvent> seList = doTest("event-ssrf.xml");
+        assertTrue(statusChecker.getHighestLevel(0) == Status.WARN);
+        statusChecker.assertContainsMatch(Status.WARN, "Document Type Declaration");
+        assertEquals(11, seList.size());
+    }
+
     @Test
     public void test2() throws Exception {
         List<SaxEvent> seList = doTest("ampEvent.xml");
