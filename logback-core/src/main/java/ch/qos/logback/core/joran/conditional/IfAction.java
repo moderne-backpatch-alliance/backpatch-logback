@@ -33,6 +33,9 @@ public class IfAction extends Action {
     public static final String MISSING_JANINO_MSG = "Could not find Janino library on the class path. Skipping conditional processing.";
     public static final String MISSING_JANINO_SEE = "See also " + CoreConstants.CODES_URL + "#ifJanino";
 
+    public static final String NEW_OPERATOR_DISALLOWED_MSG = "The 'condition' attribute may not contain the 'new' operator.";
+    public static final String NEW_OPERATOR_DISALLOWED_SEE = "See also " + CoreConstants.CODES_URL + "#conditionNew";
+
     Stack<IfState> stack = new Stack<IfState>();
 
     @Override
@@ -59,6 +62,14 @@ public class IfAction extends Action {
 
         if (!OptionHelper.isEmpty(conditionAttribute)) {
             conditionAttribute = OptionHelper.substVars(conditionAttribute, ic, context);
+
+            // do not allow 'new' operator
+            if (hasNew(conditionAttribute)) {
+                addError(NEW_OPERATOR_DISALLOWED_MSG);
+                addError(NEW_OPERATOR_DISALLOWED_SEE);
+                return;
+            }
+
             PropertyEvalScriptBuilder pesb = new PropertyEvalScriptBuilder(ic);
             pesb.setContext(context);
             try {
@@ -72,6 +83,10 @@ public class IfAction extends Action {
             }
 
         }
+    }
+
+    private boolean hasNew(String conditionStr) {
+        return conditionStr.contains("new ");
     }
 
     @Override
