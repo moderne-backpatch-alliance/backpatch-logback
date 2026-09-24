@@ -1,0 +1,17 @@
+schema: osera-patch-evidence/0.1.0
+producer: moderne
+release: 1.2.13.1-backpatch-00001
+baseline: v1.2.13+backpatch.baseline
+fixes:
+  - cve: CVE-2024-12801
+    upstream: https://nvd.nist.gov/vuln/detail/CVE-2024-12801
+    artifacts:
+      - ch.qos.logback:logback-core
+    note: New in this release; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00001 (backpatch-logback@72dbf41).
+tests:
+  commit: 72dbf414684d5ce70a9cca5cddbb3301aa5f048b
+  command: mvn -B -pl logback-core -am clean test -Dmaven.javadoc.skip=true
+  runtime: OpenJDK 1.8.0_372 (Zulu), Apache Maven 3.9.14
+  report: logback-core-1.2.13.1-backpatch-00001-tests.zip
+  result: pass
+  note: logback-core's own suite at the patch commit, 532 tests run, 0 failed, 8 skipped by the suite itself, the ported SaxEventRecorderTest among them; logback-classic and logback-access are the 1.2.13 release republished byte for byte under this version.
