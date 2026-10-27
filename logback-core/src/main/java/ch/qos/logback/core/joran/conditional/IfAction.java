@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Stack;
 
 import ch.qos.logback.core.CoreConstants;
-import ch.qos.logback.core.util.EnvUtil;
 import org.xml.sax.Attributes;
 
 import ch.qos.logback.core.joran.action.Action;
@@ -36,6 +35,9 @@ public class IfAction extends Action {
     public static final String NEW_OPERATOR_DISALLOWED_MSG = "The 'condition' attribute may not contain the 'new' operator.";
     public static final String NEW_OPERATOR_DISALLOWED_SEE = "See also " + CoreConstants.CODES_URL + "#conditionNew";
 
+    public static final String CONDITION_ATTR_REMOVED_MSG = "The 'condition' attribute in <if> element is no longer evaluated, Janino based conditional processing has been removed.";
+    public static final String IF_IN_ERROR_MSG = "The [if] statement will be marked IN_ERROR and none of its branches will be executed.";
+
     Stack<IfState> stack = new Stack<IfState>();
 
     @Override
@@ -50,43 +52,14 @@ public class IfAction extends Action {
         }
 
         ic.pushObject(this);
-        if (!EnvUtil.isJaninoAvailable()) {
-            addError(MISSING_JANINO_MSG);
-            addError(MISSING_JANINO_SEE);
-            return;
-        }
-
         state.active = true;
-        Condition condition = null;
         String conditionAttribute = attributes.getValue(CONDITION_ATTR);
 
         if (!OptionHelper.isEmpty(conditionAttribute)) {
-            conditionAttribute = OptionHelper.substVars(conditionAttribute, ic, context);
-
-            // do not allow 'new' operator
-            if (hasNew(conditionAttribute)) {
-                addError(NEW_OPERATOR_DISALLOWED_MSG);
-                addError(NEW_OPERATOR_DISALLOWED_SEE);
-                return;
-            }
-
-            PropertyEvalScriptBuilder pesb = new PropertyEvalScriptBuilder(ic);
-            pesb.setContext(context);
-            try {
-                condition = pesb.build(conditionAttribute);
-            } catch (Exception e) {
-                addError("Failed to parse condition [" + conditionAttribute + "]", e);
-            }
-
-            if (condition != null) {
-                state.boolResult = condition.evaluate();
-            }
-
+            addWarn(CONDITION_ATTR_REMOVED_MSG);
+            addWarn(IF_IN_ERROR_MSG);
+            state.conditionRemoved = true;
         }
-    }
-
-    private boolean hasNew(String conditionStr) {
-        return conditionStr.contains("new ");
     }
 
     @Override
@@ -109,6 +82,10 @@ public class IfAction extends Action {
             throw new IllegalStateException("IfAction different then current one on stack");
         }
         ic.popObject();
+
+        if (state.conditionRemoved) {
+            return;
+        }
 
         if (state.boolResult == null) {
             addError("Failed to determine \"if then else\" result");
@@ -162,4 +139,5 @@ class IfState {
     List<SaxEvent> thenSaxEventList;
     List<SaxEvent> elseSaxEventList;
     boolean active;
+    boolean conditionRemoved;
 }

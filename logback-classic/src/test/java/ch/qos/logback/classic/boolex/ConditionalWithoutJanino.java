@@ -20,6 +20,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.conditional.IfAction;
 import ch.qos.logback.core.joran.spi.JoranException;
+import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusChecker;
 import ch.qos.logback.core.util.StatusPrinter;
 import org.junit.Test;
@@ -51,7 +52,8 @@ public class ConditionalWithoutJanino {
         configure(configFile);
         StatusPrinter.print(loggerContext);
         StatusChecker checker = new StatusChecker(loggerContext);
-        checker.assertContainsMatch(IfAction.MISSING_JANINO_MSG);
+        checker.assertContainsMatch(Status.WARN, IfAction.CONDITION_ATTR_REMOVED_MSG);
+        checker.assertIsErrorFree();
 
         assertSame(Level.WARN, loggerContext.getLogger("a").getLevel());
         assertSame(Level.WARN, root.getLevel());

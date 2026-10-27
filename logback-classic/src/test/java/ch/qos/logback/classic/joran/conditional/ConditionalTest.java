@@ -15,11 +15,11 @@ package ch.qos.logback.classic.joran.conditional;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.regex.Pattern;
 
 import org.junit.After;
 import org.junit.Before;
@@ -31,8 +31,10 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.FileAppender;
+import ch.qos.logback.core.joran.conditional.IfAction;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.read.ListAppender;
+import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusChecker;
 import ch.qos.logback.core.testUtil.RandomUtil;
 import ch.qos.logback.core.util.CoreTestConstants;
@@ -65,10 +67,8 @@ public class ConditionalTest {
 
     @SuppressWarnings("rawtypes")
     @Test
-    public void conditionalConsoleApp_IF_THEN_True() throws JoranException, IOException, InterruptedException {
+    public void conditionalConsoleApp_IF_THEN_NotEvaluatedWhenHostMatches() throws JoranException, IOException, InterruptedException {
         InetAddress localhost = InetAddress.getLocalHost();
-        System.out.println("In conditionalConsoleApp_IF_THEN_True, canonicalHostName=\"" + localhost.getCanonicalHostName() + "] and hostNmae=\""
-                        + localhost.getHostName() + "\"");
         context.putProperty("aHost", localhost.getHostName());
 
         String configFileAsStr = ClassicTestConstants.JORAN_INPUT_PREFIX + "conditional/conditionalConsoleApp.xml";
@@ -77,14 +77,13 @@ public class ConditionalTest {
         assertNotNull(fileAppender);
 
         ConsoleAppender consoleAppender = (ConsoleAppender) root.getAppender("CON");
-        assertNotNull(consoleAppender);
-        StatusChecker checker = new StatusChecker(context);
-        checker.assertIsErrorFree();
+        assertNull(consoleAppender);
+        verifyConditionRemovedWarning();
     }
 
     @SuppressWarnings("rawtypes")
     @Test
-    public void conditionalConsoleApp_IF_THEN_False() throws JoranException, IOException, InterruptedException {
+    public void conditionalConsoleApp_IF_THEN_NotEvaluatedWhenHostDiffers() throws JoranException, IOException, InterruptedException {
 
         String configFileAsStr = ClassicTestConstants.JORAN_INPUT_PREFIX + "conditional/conditionalConsoleApp.xml";
         configure(configFileAsStr);
@@ -93,13 +92,12 @@ public class ConditionalTest {
 
         ConsoleAppender consoleAppender = (ConsoleAppender) root.getAppender("CON");
         assertNull(consoleAppender);
-        StatusChecker checker = new StatusChecker(context);
-        checker.assertIsErrorFree();
+        verifyConditionRemovedWarning();
     }
 
     @SuppressWarnings("rawtypes")
     @Test
-    public void conditionalConsoleApp_IF_THEN_ELSE() throws JoranException, IOException, InterruptedException {
+    public void conditionalConsoleApp_IF_THEN_ELSE_NeitherBranchIsEvaluated() throws JoranException, IOException, InterruptedException {
 
         String configFileAsStr = ClassicTestConstants.JORAN_INPUT_PREFIX + "conditional/conditionalConsoleApp_ELSE.xml";
         configure(configFileAsStr);
@@ -111,23 +109,19 @@ public class ConditionalTest {
         assertNull(consoleAppender);
 
         ListAppender listAppender = (ListAppender) root.getAppender("LIST");
-        assertNotNull(listAppender);
-
-        // StatusPrinter.printIfErrorsOccured(context);
-        StatusChecker checker = new StatusChecker(context);
-        checker.assertIsErrorFree();
+        assertNull(listAppender);
+        verifyConditionRemovedWarning();
     }
 
     @Test
-    public void conditionalInclusionWithExistingFile() throws JoranException, IOException, InterruptedException {
+    public void conditionalInclusionWithExistingFileIsNotEvaluated() throws JoranException, IOException, InterruptedException {
 
         String configFileAsStr = ClassicTestConstants.JORAN_INPUT_PREFIX + "conditional/conditionalIncludeExistingFile.xml";
         configure(configFileAsStr);
 
         ConsoleAppender consoleAppender = (ConsoleAppender) root.getAppender("CON");
-        assertNotNull(consoleAppender);
-        StatusChecker checker = new StatusChecker(context);
-        checker.assertIsErrorFree();
+        assertNull(consoleAppender);
+        verifyConditionRemovedWarning();
     }
 
     @Test
@@ -138,7 +132,13 @@ public class ConditionalTest {
 
         ConsoleAppender consoleAppender = (ConsoleAppender) root.getAppender("CON");
         assertNull(consoleAppender);
+        verifyConditionRemovedWarning();
+    }
+
+    private void verifyConditionRemovedWarning() {
         StatusChecker checker = new StatusChecker(context);
+        checker.assertContainsMatch(Status.WARN, Pattern.quote(IfAction.CONDITION_ATTR_REMOVED_MSG));
+        checker.assertContainsMatch(Status.WARN, Pattern.quote(IfAction.IF_IN_ERROR_MSG));
         checker.assertIsErrorFree();
     }
 

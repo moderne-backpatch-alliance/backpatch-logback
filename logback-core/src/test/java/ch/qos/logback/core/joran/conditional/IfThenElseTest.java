@@ -77,61 +77,57 @@ public class IfThenElseTest {
     }
 
     @Test
-    public void whenContextPropertyIsSet_IfThenBranchIsEvaluated() throws JoranException {
+    public void whenContextPropertyIsSet_NeitherBranchIsEvaluated() throws JoranException {
         context.putProperty(ki1, val1);
         tc.doConfigure(CONDITIONAL_DIR_PREFIX + "if0.xml");
-        verifyConfig(new String[] { "BEGIN", "a", "END" });
-    }
-
-    @Test
-    public void ifWithNew() throws JoranException {
-        context.putProperty(ki1, val1);
-        tc.doConfigure(CONDITIONAL_DIR_PREFIX + "ifNew.xml");
-        checker.assertContainsMatch(Status.ERROR, Pattern.quote(IfAction.NEW_OPERATOR_DISALLOWED_MSG));
-        checker.assertContainsMatch(Status.ERROR, Pattern.quote(IfAction.NEW_OPERATOR_DISALLOWED_SEE));
         verifyConfig(new String[] { "BEGIN", "END" });
+        verifyConditionRemovedWarning();
     }
 
     @Test
-    public void whenLocalPropertyIsSet_IfThenBranchIsEvaluated() throws JoranException {
+    public void whenLocalPropertyIsSet_NeitherBranchIsEvaluated() throws JoranException {
         tc.doConfigure(CONDITIONAL_DIR_PREFIX + "if_localProperty.xml");
-        verifyConfig(new String[] { "BEGIN", "a", "END" });
+        verifyConfig(new String[] { "BEGIN", "END" });
+        verifyConditionRemovedWarning();
     }
 
     @Test
-    public void whenNoPropertyIsDefined_ElseBranchIsEvaluated() throws JoranException {
+    public void whenNoPropertyIsDefined_NeitherBranchIsEvaluated() throws JoranException {
         tc.doConfigure(CONDITIONAL_DIR_PREFIX + "if0.xml");
-        verifyConfig(new String[] { "BEGIN", "b", "END" });
+        verifyConfig(new String[] { "BEGIN", "END" });
+        verifyConditionRemovedWarning();
     }
 
     @Test
-    public void whenContextPropertyIsSet_IfThenBranchIsEvaluated_NO_ELSE_DEFINED() throws JoranException {
+    public void whenContextPropertyIsSet_ThenBranchIsNotEvaluated_NO_ELSE_DEFINED() throws JoranException {
         context.putProperty(ki1, val1);
         tc.doConfigure(CONDITIONAL_DIR_PREFIX + "ifWithoutElse.xml");
-        verifyConfig(new String[] { "BEGIN", "a", "END" });
+        verifyConfig(new String[] { "BEGIN", "END" });
+        verifyConditionRemovedWarning();
     }
 
     @Test
     public void whenNoPropertyIsDefined_IfThenBranchIsNotEvaluated_NO_ELSE_DEFINED() throws JoranException {
         tc.doConfigure(CONDITIONAL_DIR_PREFIX + "ifWithoutElse.xml");
         verifyConfig(new String[] { "BEGIN", "END" });
-        assertTrue(checker.isErrorFree(0));
+        verifyConditionRemovedWarning();
     }
 
     @Test
     public void nestedIf() throws JoranException {
         tc.doConfigure(CONDITIONAL_DIR_PREFIX + "nestedIf.xml");
-        verifyConfig(new String[] { "BEGIN", "a", "c", "END" });
-        assertTrue(checker.isErrorFree(0));
+        verifyConfig(new String[] { "BEGIN", "END" });
+        verifyConditionRemovedWarning();
     }
 
     @Test
-    public void useNonExistenceOfSystemPropertyToDefineAContextProperty() throws JoranException {
+    public void noContextPropertyIsDefinedWhenSystemPropertyIsAbsent() throws JoranException {
         assertNull(System.getProperty(sysKey));
         assertNull(context.getProperty(dynaKey));
         tc.doConfigure(CONDITIONAL_DIR_PREFIX + "ifSystem.xml");
         System.out.println(dynaKey + "=" + context.getProperty(dynaKey));
-        assertNotNull(context.getProperty(dynaKey));
+        assertNull(context.getProperty(dynaKey));
+        verifyConditionRemovedWarning();
     }
 
     @Test
@@ -142,6 +138,20 @@ public class IfThenElseTest {
         tc.doConfigure(CONDITIONAL_DIR_PREFIX + "ifSystem.xml");
         System.out.println(dynaKey + "=" + context.getProperty(dynaKey));
         assertNull(context.getProperty(dynaKey));
+    }
+
+    @Test
+    public void badExpression0() throws JoranException {
+        tc.doConfigure(CONDITIONAL_DIR_PREFIX + "ifBogusExpression0.xml");
+        StatusPrinter.print(context);
+        // the whole if block is skipped
+        verifyConfig(new String[] { "BEGIN", "END" });
+    }
+
+    private void verifyConditionRemovedWarning() {
+        checker.assertContainsMatch(Status.WARN, Pattern.quote(IfAction.CONDITION_ATTR_REMOVED_MSG));
+        checker.assertContainsMatch(Status.WARN, Pattern.quote(IfAction.IF_IN_ERROR_MSG));
+        checker.assertIsErrorFree();
     }
 
     private void verifyConfig(String[] expected) {
