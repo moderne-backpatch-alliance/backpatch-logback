@@ -1,22 +1,37 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 1.2.13.1-backpatch-00002
+release: 1.2.13.1-backpatch-00003
 baseline: v1.2.13+backpatch.baseline
 fixes:
   - cve: CVE-2024-12801
-    upstream: https://nvd.nist.gov/vuln/detail/CVE-2024-12801
+    upstream_fix_url: https://github.com/qos-ch/logback/commit/2863a4974a3649b5b00d4a529ee6ff2063470f35
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2024-12801
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-logback/commit/72dbf41
+    basis: backport
     artifacts:
       - ch.qos.logback:logback-core
     note: Carried from 1.2.13.1-backpatch-00001; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00001 (backpatch-logback@72dbf41).
   - cve: CVE-2025-11226
-    upstream: https://nvd.nist.gov/vuln/detail/CVE-2025-11226
+    upstream_fix_url: https://github.com/qos-ch/logback/commit/e3aa0f440cf7a3b98f16fbb21bcea83f72be71e6
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2025-11226
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-logback/commit/8c3076c
+    basis: adapted
     artifacts:
       - ch.qos.logback:logback-core
-    note: New in this release; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00002 (backpatch-logback@8c3076c).
+    note: Carried from 1.2.13.1-backpatch-00002; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00002 (backpatch-logback@8c3076c).
+  - cve: CVE-2026-13006
+    upstream_fix_url: https://github.com/qos-ch/logback/commit/a1899674579c67711a4fff6bdc569f4bfb25ead5
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2026-13006
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-logback/commit/624061b
+    basis: adapted
+    artifacts:
+      - ch.qos.logback:logback-core
+    note: "New in this release; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00003 (backpatch-logback@624061b). Effect: an <if condition> in a configuration file no longer applies either branch and logs two warnings, as upstream 1.5.37, which removed Janino based conditional processing and skips the block with warnings. No error status is logged, so applications that stop on logback configuration errors (Spring Boot does) still start. Janino stays on the classpath for the Janino event evaluators."
 tests:
-  commit: 8c3076c04a1679aae7d1276f7683b139b33adbfe
-  command: mvn -B -pl logback-core -am clean test -Dmaven.javadoc.skip=true
-  runtime: OpenJDK 1.8.0_372 (Zulu), Apache Maven 3.9.14
-  report: logback-core-1.2.13.1-backpatch-00002-tests.zip
+  commit: 624061bcd5ab0122da62ee659bddc032eac91eea
+  command: mvn -B -pl logback-core,logback-classic,logback-access -am clean test -Dmaven.javadoc.skip=true
+  runtime: OpenJDK 1.8.0_382 (Zulu), Apache Maven 3.9.16
+  report: logback-core-1.2.13.1-backpatch-00003-tests.zip
+  report_sha256: fb85f22aa6173d57e3cf7b6870c510dd6ec750278b8773f125a534380f69adf8
   result: pass
-  note: logback-core's own suite at the patch commit, 533 tests run, 0 failed, 8 skipped by the suite itself, the ported IfThenElseTest and SaxEventRecorderTest among them; logback-classic and logback-access are the 1.2.13 release republished byte for byte under this version.
+  note: the full suites of logback-core, logback-classic and logback-access at the tested commit (logback-core 533, logback-classic 389, logback-access 46 tests run), 0 failed, 0 errors, 8+14+0 skipped by the suites themselves, the changed IfThenElseTest, IfThenElseAndIncludeCompositionTest and both ConditionalTest classes among them; the changed ConditionalWithoutJanino, which surefire's default includes skip, ran separately at the same commit (mvn -B -pl logback-core,logback-classic -am test -Dmaven.javadoc.skip=true -DfailIfNoTests=false -Dtest=ConditionalWithoutJanino) and is counted in logback-classic's total, its XML in this archive; logback-access reports are surefire plain text, its pom disables the XML report; logback-classic and logback-access change only in tests and are the 1.2.13 release republished byte for byte under this version.
