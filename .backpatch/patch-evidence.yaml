@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 1.2.13.1-backpatch-00003
+release: 1.2.13.1-backpatch-00004
 baseline: v1.2.13+backpatch.baseline
 fixes:
   - cve: CVE-2024-12801
@@ -26,12 +26,11 @@ fixes:
     basis: adapted
     artifacts:
       - ch.qos.logback:logback-core
-    note: "New in this release; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00003 (backpatch-logback@624061b). Effect: an <if condition> in a configuration file no longer applies either branch and logs two warnings, as upstream 1.5.37, which removed Janino based conditional processing and skips the block with warnings. No error status is logged, so applications that stop on logback configuration errors (Spring Boot does) still start. Janino stays on the classpath for the Janino event evaluators."
+    note: Carried from 1.2.13.1-backpatch-00003; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00003 (backpatch-logback@624061b).
 tests:
-  commit: 624061bcd5ab0122da62ee659bddc032eac91eea
-  command: mvn -B -pl logback-core,logback-classic,logback-access -am clean test -Dmaven.javadoc.skip=true
-  runtime: OpenJDK 1.8.0_382 (Zulu), Apache Maven 3.9.16
-  report: logback-core-1.2.13.1-backpatch-00003-tests.zip
-  report_sha256: fb85f22aa6173d57e3cf7b6870c510dd6ec750278b8773f125a534380f69adf8
+  commit: 733003187fb0e0ca59b05d0f4ea137a78b02595d
+  command: none in this repository
+  runtime: none, no build or test ran for this release
+  report: carried, see the evidence of the release named in the note
   result: pass
-  note: the full suites of logback-core, logback-classic and logback-access at the tested commit (logback-core 533, logback-classic 389, logback-access 46 tests run), 0 failed, 0 errors, 8+14+0 skipped by the suites themselves, the changed IfThenElseTest, IfThenElseAndIncludeCompositionTest and both ConditionalTest classes among them; the changed ConditionalWithoutJanino, which surefire's default includes skip, ran separately at the same commit (mvn -B -pl logback-core,logback-classic -am test -Dmaven.javadoc.skip=true -DfailIfNoTests=false -Dtest=ConditionalWithoutJanino) and is counted in logback-classic's total, its XML in this archive; logback-access reports are surefire plain text, its pom disables the XML report; logback-classic and logback-access change only in tests and are the 1.2.13 release republished byte for byte under this version.
+  note: "this release is a tooling update, it carries no new fix, nothing ran here; its test provenance is tooling-2026-11-03-logback-1.2: a tooling update of moderne-backpatch-alliance/backpatch-logback at v1.2.13.1-backpatch-00003, whose .backpatch/patch-evidence.yaml says what ran"
