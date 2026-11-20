@@ -9,7 +9,9 @@ import ch.qos.logback.core.net.HardenedObjectInputStream;
 public class HardenedAccessEventInputStream extends HardenedObjectInputStream {
 
     public HardenedAccessEventInputStream(InputStream in) throws IOException {
-        super(in, new String[] {AccessEvent.class.getName(), String[].class.getName()});
+        super(in, new String[] {AccessEvent.class.getName(), String[].class.getName(),
+                // AccessEvent.requestHeaderMap
+                "java.util.TreeMap", "java.lang.String$CaseInsensitiveComparator"});
     }
 
 }

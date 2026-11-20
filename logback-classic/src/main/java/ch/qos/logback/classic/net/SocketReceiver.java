@@ -157,7 +157,7 @@ public class SocketReceiver extends ReceiverBase implements Runnable, SocketConn
         ObjectInputStream ois = null;
         try {
             socket.setSoTimeout(acceptConnectionTimeout);
-            ois = new HardenedLoggingEventInputStream(socket.getInputStream());
+            ois = new HardenedLoggingEventInputStream(lc, socket.getInputStream());
             socket.setSoTimeout(0);
             addInfo(receiverId + "connection established");
             while (true) {

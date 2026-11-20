@@ -9,6 +9,7 @@ import org.slf4j.helpers.BasicMarker;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ClassPackagingData;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
@@ -41,6 +42,8 @@ public class HardenedLoggingEventInputStream extends HardenedObjectInputStream {
         whitelist.add(StackTraceElementProxy.class.getName());
         whitelist.add(StackTraceElementProxy[].class.getName());
         whitelist.add(ClassPackagingData.class.getName());
+        // LogbackMDCAdapter in 1.2.x hands this type to LoggingEventVO
+        whitelist.add("java.util.Collections$SynchronizedMap");
 
         return whitelist;
     }
@@ -51,6 +54,15 @@ public class HardenedLoggingEventInputStream extends HardenedObjectInputStream {
     
     public HardenedLoggingEventInputStream(InputStream is, List<String> additionalAuthorizedClasses) throws IOException {
         this(is);
+        super.addToWhitelist(additionalAuthorizedClasses);
+    }
+
+    public HardenedLoggingEventInputStream(LoggerContext loggerContext, InputStream is) throws IOException {
+        super(loggerContext, is, getWhilelist());
+    }
+
+    public HardenedLoggingEventInputStream(LoggerContext loggerContext, InputStream is, List<String> additionalAuthorizedClasses) throws IOException {
+        this(loggerContext, is);
         super.addToWhitelist(additionalAuthorizedClasses);
     }
 }

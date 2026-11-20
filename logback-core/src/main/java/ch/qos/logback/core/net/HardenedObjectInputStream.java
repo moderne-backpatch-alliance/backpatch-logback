@@ -13,6 +13,8 @@
  */
 package ch.qos.logback.core.net;
 
+import ch.qos.logback.core.Context;
+import ch.qos.logback.core.spi.ContextAwareImpl;
 import ch.qos.logback.core.util.EnvUtil;
 
 import java.io.IOException;
@@ -24,14 +26,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 /**
  * HardenedObjectInputStream restricts the set of classes that can be deserialized to a set of 
  * explicitly whitelisted classes. This prevents certain type of attacks from being successful.
  * 
- * <p>It is assumed that classes in the "java.lang" and  "java.util" packages are 
- * always authorized.</p>
+ * <p>A short list of classes in the "java.lang" and "java.util" packages is
+ * authorized as well.</p>
  * 
  * @author Ceki G&uuml;lc&uuml;
  * @since 1.2.0
@@ -39,23 +42,49 @@ import java.util.List;
 public class HardenedObjectInputStream extends ObjectInputStream {
 
     final List<String> whitelistedClassNames;
-    final static String[] JAVA_PACKAGES = new String[] { "java.lang", "java.util" };
+    final private static String[] JAVA_CLASSES = new String[] { "java.lang.Boolean",
+            "java.lang.Byte",
+            "java.lang.Character",
+            "java.lang.Double",
+            "java.lang.Float",
+            "java.lang.Integer",
+            "java.lang.Long",
+            "java.lang.Number",
+            "java.lang.Short",
+            "java.lang.String",
+            "java.lang.Throwable",
+            "java.util.ArrayList",
+            "java.util.Collections$EmptyMap",
+            "java.util.Collections$UnmodifiableMap",
+            "java.util.concurrent.CopyOnWriteArrayList",
+            "java.util.HashMap"
+    };
     final private static int DEPTH_LIMIT = 16;
     final private static int ARRAY_LIMIT = 10000;
+    final private static int ERROR_COUNT_LIMIT = 10;
+
+    final private ContextAwareImpl contextAware;
+    final private HashMap<String, Integer> errorMap = new HashMap<String, Integer>();
 
     public HardenedObjectInputStream(InputStream in, String[] whilelist) throws IOException {
-        super(in);
-        initObjectFilter();
-        this.whitelistedClassNames = new ArrayList<String>();
-        if (whilelist != null) {
-            for (int i = 0; i < whilelist.length; i++) {
-                this.whitelistedClassNames.add(whilelist[i]);
-            }
-        }
+        this(null, in, whilelist);
     }
 
     public HardenedObjectInputStream(InputStream in, List<String> whitelist) throws IOException {
+        this(null, in, whitelist);
+    }
+
+    public HardenedObjectInputStream(Context context, InputStream in, String[] whitelist) throws IOException {
+        this(context, in, whitelist == null ? new ArrayList<String>() : Arrays.asList(whitelist));
+    }
+
+    public HardenedObjectInputStream(Context context, InputStream in, List<String> whitelist) throws IOException {
         super(in);
+        if (context != null) {
+            this.contextAware = new ContextAwareImpl(context, this);
+        } else {
+            this.contextAware = null;
+        }
         initObjectFilter();
         this.whitelistedClassNames = new ArrayList<String>();
         this.whitelistedClassNames.addAll(whitelist);
@@ -122,14 +151,23 @@ public class HardenedObjectInputStream extends ObjectInputStream {
     }
 
     private boolean isWhitelisted(String incomingClassName) {
-        for (int i = 0; i < JAVA_PACKAGES.length; i++) {
-            if (incomingClassName.startsWith(JAVA_PACKAGES[i]))
+        for (String javaClass : JAVA_CLASSES) {
+            if (incomingClassName.equals(javaClass))
                 return true;
         }
         for (String whiteListed : whitelistedClassNames) {
             if (incomingClassName.equals(whiteListed))
                 return true;
         }
+
+        Integer previousCount = errorMap.get(incomingClassName);
+        int errorCount = previousCount == null ? 1 : previousCount + 1;
+        errorMap.put(incomingClassName, errorCount);
+        if (contextAware != null && errorCount < ERROR_COUNT_LIMIT) {
+            contextAware.addError("Unauthorized deserialization attempt for class [" + incomingClassName + "]");
+            contextAware.addError("If you deem the class to be legitimate, please contact the project maintainers to have it whitelisted.");
+        }
+
         return false;
     }
 

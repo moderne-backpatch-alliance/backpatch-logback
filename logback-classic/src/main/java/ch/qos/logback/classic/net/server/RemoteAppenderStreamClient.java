@@ -122,9 +122,9 @@ class RemoteAppenderStreamClient implements RemoteAppenderClient {
 
     private HardenedObjectInputStream createObjectInputStream() throws IOException {
         if (inputStream != null) {
-            return new HardenedLoggingEventInputStream(inputStream);
+            return new HardenedLoggingEventInputStream(lc, inputStream);
         }
-        return new HardenedLoggingEventInputStream(socket.getInputStream());
+        return new HardenedLoggingEventInputStream(lc, socket.getInputStream());
     }
 
     /**

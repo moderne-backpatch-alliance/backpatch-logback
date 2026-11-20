@@ -6,15 +6,24 @@ import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InvalidClassException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 
+import ch.qos.logback.core.Context;
+import ch.qos.logback.core.ContextBase;
+import ch.qos.logback.core.status.Status;
+import ch.qos.logback.core.status.StatusChecker;
 import ch.qos.logback.core.util.EnvUtil;
 import org.junit.After;
 import org.junit.Before;
@@ -105,6 +114,72 @@ public class HardenedObjectInputStreamTest {
             s2 = t2;
         }
         return root;
+    }
+
+    // tests written by us: upstream's 12cf2c5a15 only adapts existing tests to the new constructors
+    @Test
+    public void listedJavaClassesAreRead() throws Exception {
+        ArrayList<Object> list = new ArrayList<Object>();
+        list.add("a");
+        list.add(Integer.valueOf(1));
+        HashMap<String, Object> map = new HashMap<String, Object>();
+        map.put("list", list);
+        map.put("long", Long.valueOf(2));
+        assertEquals(map, readWith(map, whitelist));
+    }
+
+    @Test
+    public void unlistedJavaUtilClassIsRefused() throws Exception {
+        assertRefused(new HashSet<String>());
+        assertRefused(new LinkedList<String>());
+        assertRefused(new Date());
+    }
+
+    @Test
+    public void unlistedJavaLangClassIsRefused() throws Exception {
+        assertRefused(new StackTraceElement("c", "m", "f", 1));
+    }
+
+    @Test
+    public void refusalIsReportedToContext() throws Exception {
+        Context context = new ContextBase();
+        ByteArrayInputStream bis = new ByteArrayInputStream(serialize(new HashSet<String>()));
+        // reflection: under a revert of the fix this fails at run time, not at compile time
+        HardenedObjectInputStream ois = HardenedObjectInputStream.class.getConstructor(Context.class, InputStream.class, String[].class).newInstance(context,
+                        bis, whitelist);
+        try {
+            ois.readObject();
+            fail("InvalidClassException expected");
+        } catch (InvalidClassException expected) {
+        } finally {
+            ois.close();
+        }
+        new StatusChecker(context).assertContainsMatch(Status.ERROR, "Unauthorized deserialization attempt for class \\[java.util.HashSet\\]");
+    }
+
+    private void assertRefused(Serializable o) throws Exception {
+        try {
+            readWith(o, whitelist);
+            fail("InvalidClassException expected for " + o.getClass().getName());
+        } catch (InvalidClassException expected) {
+        }
+    }
+
+    private Object readWith(Serializable o, String[] allowed) throws Exception {
+        HardenedObjectInputStream ois = new HardenedObjectInputStream(new ByteArrayInputStream(serialize(o)), allowed);
+        try {
+            return ois.readObject();
+        } finally {
+            ois.close();
+        }
+    }
+
+    private byte[] serialize(Serializable o) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ObjectOutputStream objectOut = new ObjectOutputStream(out);
+        objectOut.writeObject(o);
+        objectOut.close();
+        return out.toByteArray();
     }
 
     /**
