@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 1.2.13.1-backpatch-00007
+release: 1.2.13.1-backpatch-00008
 baseline: v1.2.13+backpatch.baseline
 fixes:
   - cve: CVE-2024-12801
@@ -54,12 +54,20 @@ fixes:
       - ch.qos.logback:logback-core
       - ch.qos.logback:logback-classic
       - ch.qos.logback:logback-access
-    note: New in this release; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00007 (backpatch-logback@24497ff). Besides upstream's allow-list, this release allows java.util.Collections$SynchronizedMap in logback-classic (its MDC map) and java.util.TreeMap and java.lang.String$CaseInsensitiveComparator in logback-access (request header maps); these additions are ours, since 1.2's own serialized events contain them. Values of other java.lang and java.util types, such as java.util.Date, are now refused.
+    note: Carried from 1.2.13.1-backpatch-00007; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00007 (backpatch-logback@24497ff). Besides upstream's allow-list, this release allows java.util.Collections$SynchronizedMap in logback-classic (its MDC map) and java.util.TreeMap and java.lang.String$CaseInsensitiveComparator in logback-access (request header maps); these additions are ours, since 1.2's own serialized events contain them. Values of other java.lang and java.util types, such as java.util.Date, are now refused.
+  - cve: CVE-2026-1225
+    upstream_fix_url: https://github.com/qos-ch/logback/commit/d28931f3b9ede954285cd22d44e029142bba52e6
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2026-1225
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-logback/commit/bd4f812
+    basis: adapted
+    artifacts:
+      - ch.qos.logback:logback-core
+    note: New in this release; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00008 (backpatch-logback@bd4f812).
 tests:
-  commit: 24497ff3c94b3fb1a19ec75e79727800a8b5898d
+  commit: bd4f81280491ef52d5bc0d5195a742d5b08da521
   command: mvn -B -T1 -pl logback-core,logback-classic,logback-access -am -Dmaven.javadoc.skip=true -Dossindex.skip=true -Dmaven.test.failure.ignore=true clean test
   runtime: OpenJDK 1.8.0_382 (Zulu) on macOS arm64, Apache Maven 3.9.16
-  report: logback-core-1.2.13.1-backpatch-00007-tests.zip
-  report_sha256: 195c2f0a100bbca867374d21fa397dc50136a1e87aefddbde26e5d964b7d0354
+  report: logback-core-1.2.13.1-backpatch-00008-tests.zip
+  report_sha256: 0c520c831c1544c36199b4b9d9134cdf0294d08b6a3b708f81433162ff9499dd
   result: pass
-  note: 912 tests at the patch commit, 23 of them skipped by the suite, 0 failed, 0 errors.
+  note: 913 tests at the patch commit, 23 of them skipped by the suite, 0 failed, 0 errors.
