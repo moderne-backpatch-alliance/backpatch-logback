@@ -214,6 +214,7 @@ public class JoranConfiguratorTest {
         assertEquals("hello", back.getMessage());
     }
 
+    @Ignore("upstream disabled this with the removal of JaninoEventEvaluator, CVE-2024-12798")
     @Test
     public void testEvaluatorFilter() throws JoranException {
         configure(ClassicTestConstants.JORAN_INPUT_PREFIX + "evaluatorFilter.xml");

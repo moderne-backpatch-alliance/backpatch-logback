@@ -19,6 +19,7 @@ import org.xml.sax.Attributes;
 
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.boolex.EventEvaluator;
+import ch.qos.logback.core.boolex.JaninoEventEvaluatorBase;
 import ch.qos.logback.core.joran.spi.InterpretationContext;
 import ch.qos.logback.core.spi.LifeCycle;
 import ch.qos.logback.core.util.OptionHelper;
@@ -98,6 +99,11 @@ abstract public class AbstractEventEvaluatorAction extends Action {
             addWarn("The object on the top the of the stack is not the evaluator pushed earlier.");
         } else {
             ec.popObject();
+
+            // upstream removed the Janino evaluators; converters must see them as undeclared
+            if (evaluator instanceof JaninoEventEvaluatorBase) {
+                return;
+            }
 
             try {
                 Map<String, EventEvaluator<?>> evaluatorMap = (Map<String, EventEvaluator<?>>) context.getObject(CoreConstants.EVALUATOR_MAP);

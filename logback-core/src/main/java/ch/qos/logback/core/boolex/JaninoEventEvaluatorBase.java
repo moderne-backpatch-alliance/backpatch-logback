@@ -16,10 +16,10 @@ package ch.qos.logback.core.boolex;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.codehaus.janino.ScriptEvaluator;
-
 /**
- * Abstract class which sets the groundwork for janino based evaluations.
+ * Abstract class which set the groundwork for janino based evaluations. The class
+ * is kept for binary compatibility; expressions are no longer compiled or
+ * evaluated, see CVE-2024-12798.
  * 
  * @author Ceki G&uuml;lc&uuml;
  * 
@@ -27,18 +27,11 @@ import org.codehaus.janino.ScriptEvaluator;
  */
 abstract public class JaninoEventEvaluatorBase<E> extends EventEvaluatorBase<E> {
 
-    static Class<?> EXPRESSION_TYPE = boolean.class;
-    static Class<?>[] THROWN_EXCEPTIONS = new Class[1];
-
     static public final int ERROR_THRESHOLD = 4;
-    static {
-        THROWN_EXCEPTIONS[0] = EvaluationException.class;
-    }
+
+    static final String REMOVED_MSG = "Janino based event evaluators have been removed, see CVE-2024-12798.";
 
     private String expression;
-
-    ScriptEvaluator scriptEvaluator;
-    private int errorCount = 0;
 
     abstract protected String getDecoratedExpression();
 
@@ -52,29 +45,11 @@ abstract public class JaninoEventEvaluatorBase<E> extends EventEvaluatorBase<E> 
 
     @Override
     public void start() {
-        try {
-            assert context != null;
-            scriptEvaluator = new ScriptEvaluator(getDecoratedExpression(), EXPRESSION_TYPE, getParameterNames(), getParameterTypes(), THROWN_EXCEPTIONS);
-            super.start();
-        } catch (Exception e) {
-            addError("Could not start evaluator with expression [" + expression + "]", e);
-        }
+        addError(REMOVED_MSG + " Evaluator [" + name + "] was not started.");
     }
 
     public boolean evaluate(E event) throws EvaluationException {
-        if (!isStarted()) {
-            throw new IllegalStateException("Evaluator [" + name + "] was called in stopped state");
-        }
-        try {
-            Boolean result = (Boolean) scriptEvaluator.evaluate(getParameterValues(event));
-            return result.booleanValue();
-        } catch (Exception ex) {
-            errorCount++;
-            if (errorCount >= ERROR_THRESHOLD) {
-                stop();
-            }
-            throw new EvaluationException("Evaluator [" + name + "] caused an exception", ex);
-        }
+        throw new EvaluationException("Evaluator [" + name + "]: " + REMOVED_MSG);
     }
 
     public String getExpression() {
