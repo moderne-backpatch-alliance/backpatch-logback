@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 1.2.13.1-backpatch-00005
+release: 1.2.13.1-backpatch-00006
 baseline: v1.2.13+backpatch.baseline
 fixes:
   - cve: CVE-2024-12801
@@ -36,12 +36,20 @@ fixes:
       - ch.qos.logback:logback-core
       - ch.qos.logback:logback-classic
       - ch.qos.logback:logback-access
-    note: "New in this release; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00005 (backpatch-logback@383aaca). Janino-based evaluators are disabled, not deleted as upstream does: the classes stay, so code that names them still links, but a configured Janino evaluator logs an ERROR, never starts, and throws on evaluate. An SMTPAppender configured with such an evaluator therefore sends no mail."
+    note: "Carried from 1.2.13.1-backpatch-00005; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00005 (backpatch-logback@383aaca). Janino-based evaluators are disabled, not deleted as upstream does: the classes stay, so code that names them still links, but a configured Janino evaluator logs an ERROR, never starts, and throws on evaluate. An SMTPAppender configured with such an evaluator therefore sends no mail."
+  - cve: CVE-2026-10532
+    upstream_fix_url: https://github.com/advisories/GHSA-jhq6-gfmj-v8fx
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2026-10532
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-logback/commit/2144527
+    basis: adapted
+    artifacts:
+      - ch.qos.logback:logback-core
+    note: New in this release; ported onto 1.2.13; fixed at 1.2.13.1-backpatch-00006 (backpatch-logback@2144527).
 tests:
-  commit: 383aaca2b47abce6d9118ced6ad2537e7b2cf98f
+  commit: 21445272d9bbf2114afdeec236c45c2262588ecd
   command: mvn -B -T1 -pl logback-core,logback-classic,logback-access -am -Dmaven.javadoc.skip=true -Dossindex.skip=true -Dmaven.test.failure.ignore=true clean test
   runtime: OpenJDK 1.8.0_382 (Zulu) on macOS arm64, Apache Maven 3.9.16
-  report: logback-core-1.2.13.1-backpatch-00005-tests.zip
-  report_sha256: 107a190e58ace0ceecf1feae94135fe0ad85e4ad4017346cffbf6036b51adde0
+  report: logback-core-1.2.13.1-backpatch-00006-tests.zip
+  report_sha256: ec97c665749490bf2c09b72ca7c173cdce44d82da53284b81cf45a4871327328
   result: pass
-  note: 906 tests at the patch commit, 23 of them skipped by the suite, 0 failed, 0 errors.
+  note: 908 tests at the patch commit, 23 of them skipped by the suite, 0 failed, 0 errors.
