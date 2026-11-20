@@ -227,6 +227,40 @@ public class PropertySetter extends ContextAwareBase {
         }
     }
 
+    public Class<?> getTypeForComplexProperty(String nestedElementTagName, AggregationType aggregationType) {
+
+        Method aMethod = null;
+        switch (aggregationType) {
+        case AS_COMPLEX_PROPERTY:
+            aMethod = findSetterMethod(nestedElementTagName);
+            break;
+        case AS_COMPLEX_PROPERTY_COLLECTION:
+            aMethod = findAdderMethod(nestedElementTagName);
+            break;
+        default:
+            break;
+        }
+
+        checkParameterCount(aMethod, nestedElementTagName);
+
+        Class<?>[] paramTypes = aMethod.getParameterTypes();
+        return paramTypes[0];
+    }
+
+    private void checkParameterCount(Method aMethod, String nestedElementTagName) {
+        if (aMethod == null) {
+            String msg = "Could not find method for property [" + nestedElementTagName + "].";
+            addError(msg);
+            throw new IllegalStateException(msg);
+        }
+        int parameterCount = aMethod.getParameterTypes().length;
+        if (parameterCount != 1) {
+            String msg = "Expected [" + aMethod.getName() + "] for property [" + nestedElementTagName + "] to have exactly one parameter.";
+            addError(msg);
+            throw new IllegalStateException(msg);
+        }
+    }
+
     public Class<?> getObjClass() {
         return objClass;
     }
