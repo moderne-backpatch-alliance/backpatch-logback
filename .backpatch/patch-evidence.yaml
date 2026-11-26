@@ -1,0 +1,21 @@
+schema: osera-patch-evidence/0.1.0
+producer: moderne
+release: 1.4.14.1-backpatch-00001
+baseline: v1.4.14+backpatch.baseline
+fixes:
+  - cve: CVE-2024-12801
+    upstream_fix_url: https://github.com/qos-ch/logback/commit/2863a4974a3649b5b00d4a529ee6ff2063470f35
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2024-12801
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-logback/commit/ef5b893
+    basis: backport
+    artifacts:
+      - ch.qos.logback:logback-core
+    note: New in this release; ported onto 1.4.14; fixed at 1.4.14.1-backpatch-00001 (backpatch-logback@ef5b893).
+tests:
+  commit: ef5b893b3a6a2fcb7b18e39f8673ca5e03875a81
+  command: mvn -B -T1 -pl logback-core,logback-classic,logback-access,logback-core-blackbox,logback-classic-blackbox -am -Dmaven.javadoc.skip=true -Dossindex.skip=true -Dmaven.test.failure.ignore=true clean test
+  runtime: openjdk version 21 2023-09-19, Apache Maven 3.9.16
+  report: logback-core-1.4.14.1-backpatch-00001-tests.zip
+  report_sha256: fa55f869d52dced38e05dfe384860d07134ec72edfd6b60c43d208ed008e9dee
+  result: pass
+  note: 1027 tests at the patch commit, 48 of them skipped by the suite, 0 failed, 0 errors.
